@@ -5,6 +5,9 @@ from abc import ABC, abstractmethod
 from . import networks
 
 from torchsummary import summary
+import onnx
+from onnx import shape_inference
+
 
 
 class BaseModel(ABC):
@@ -226,14 +229,15 @@ class BaseModel(ABC):
 
                 torch.onnx.export(net, random_input, save_path,
                                   input_names = input_names, output_names = output_names,
-                                  opset_version = 11,
-                                  dynamic_axes={
-                                  'output' : {
-                                    0:'1',
-                                    1:'3',
-                                    2:'512',
-                                    3:'512'
-                                  }})
+                                  opset_version = 11,)
+                                #   dynamic_axes={
+                                #   'output' : {
+                                #     0:'1',
+                                #     1:'3',
+                                #     2:'512',
+                                #     3:'512'
+                                #   }})
+                onnx.save(onnx.shape_inference.infer_shapes(onnx.load(save_path)), save_path)
                 
                 
                 # summary(net, input_shape)
