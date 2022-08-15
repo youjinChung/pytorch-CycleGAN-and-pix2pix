@@ -4,6 +4,8 @@ from collections import OrderedDict
 from abc import ABC, abstractmethod
 from . import networks
 
+from torchsummary import summary
+
 
 class BaseModel(ABC):
     """This class is an abstract base class (ABC) for models.
@@ -197,7 +199,45 @@ class BaseModel(ABC):
                 for key in list(state_dict.keys()):  # need to copy keys here because we mutate in loop
                     self.__patch_instance_norm_state_dict(state_dict, net, key.split('.'))
                 net.load_state_dict(state_dict)
+                # for ONNX conversion
+                net.eval()
+                # net.cuda()  # in this example using cuda()
 
+                """
+                if len(self.gpu_ids) > 0 and torch.cuda.is_available():
+                    torch.save(net.module.cpu().state_dict(), save_path)
+                    net.cuda(self.gpu_ids[0])
+                else:
+                    torch.save(net.cpu().state_dict(), save_path)
+                """
+                RESOLUTION = 512
+
+                batch_size = 1  
+                input_shape = (3, RESOLUTION, RESOLUTION)  # in my case its 512
+                export_onnx_file = load_filename[:-4]+".onnx"  
+                save_path = os.path.join(self.save_dir, export_onnx_file)
+
+                torch.save(net.cpu().state_dict(), save_path)
+                input_names = ["input"]
+                output_names = ["output"]
+
+                # dinput = torch.randn(batch_size, *input_shape).cuda()   #same with net: cuda()
+                random_input = torch.randn(1, 3, RESOLUTION, RESOLUTION, dtype=torch.float32)
+
+                torch.onnx.export(net, random_input, save_path,
+                                  input_names = input_names, output_names = output_names,
+                                  opset_version = 11,
+                                  dynamic_axes={
+                                  'output' : {
+                                    0:'1',
+                                    1:'3',
+                                    2:'512',
+                                    3:'512'
+                                  }})
+                
+                
+                # summary(net, input_shape)
+                print('The ONNX file ' + export_onnx_file + ' is saved at %s' % save_path)
     def print_networks(self, verbose):
         """Print the total number of parameters in the network and (if verbose) network architecture
 

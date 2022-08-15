@@ -23,6 +23,7 @@ from options.train_options import TrainOptions
 from data import create_dataset
 from models import create_model
 from util.visualizer import Visualizer
+import shutil
 
 if __name__ == '__main__':
     opt = TrainOptions().parse()   # get training options
@@ -67,11 +68,21 @@ if __name__ == '__main__':
                 print('saving the latest model (epoch %d, total_iters %d)' % (epoch, total_iters))
                 save_suffix = 'iter_%d' % total_iters if opt.save_by_iter else 'latest'
                 model.save_networks(save_suffix)
+                # upload to google drive
+                shutil.copy('/content/pytorch-CycleGAN-and-pix2pix/checkpoints/face2smile/{}_net_G_A.pth'.format(epoch),'/content/Google/MyDrive/')
+                shutil.copy('/content/pytorch-CycleGAN-and-pix2pix/checkpoints/face2smile/{}_net_G_B.pth'.format(epoch),'/content/Google/MyDrive/')
+                shutil.copy('/content/pytorch-CycleGAN-and-pix2pix/checkpoints/face2smile/latest_net_D_A.pth','/content/Google/MyDrive/')
+                shutil.copy('/content/pytorch-CycleGAN-and-pix2pix/checkpoints/face2smile/latest_net_D_B.pth','/content/Google/MyDrive/')
 
             iter_data_time = time.time()
         if epoch % opt.save_epoch_freq == 0:              # cache our model every <save_epoch_freq> epochs
             print('saving the model at the end of epoch %d, iters %d' % (epoch, total_iters))
             model.save_networks('latest')
             model.save_networks(epoch)
+            # upload to google drive
+            shutil.copy('/content/pytorch-CycleGAN-and-pix2pix/checkpoints/face2smile/{}_net_G_A.pth'.format(epoch),'/content/Google/MyDrive/')
+            shutil.copy('/content/pytorch-CycleGAN-and-pix2pix/checkpoints/face2smile/{}_net_G_B.pth'.format(epoch),'/content/Google/MyDrive/')
+            shutil.copy('/content/pytorch-CycleGAN-and-pix2pix/checkpoints/face2smile/{}_net_D_A.pth'.format(epoch),'/content/Google/MyDrive/')
+            shutil.copy('/content/pytorch-CycleGAN-and-pix2pix/checkpoints/face2smile/{}_net_D_B.pth'.format(epoch),'/content/Google/MyDrive/')
 
         print('End of epoch %d / %d \t Time Taken: %d sec' % (epoch, opt.n_epochs + opt.n_epochs_decay, time.time() - epoch_start_time))
